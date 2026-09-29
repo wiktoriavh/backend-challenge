@@ -8,11 +8,7 @@ pnpm install
 
 ## Run
 
-```
-pnpm test
-```
-
-Runs a small (5 items) and a large (50 items) randomly-generated batch of entities through the Lambda pipeline, one item at a time, and prints a pass/fail summary for each batch. Run just one size with `pnpm test:small` or `pnpm test:large`.
+Check the package.json file to see the various ways to run it.
 
 ## Challenge
 
