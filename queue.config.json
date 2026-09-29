@@ -1,0 +1,5 @@
+{
+  "fifo": false,
+  "maxBatchSize": 10,
+  "maxWaitMs": 300
+}
