@@ -1,42 +1,56 @@
 import { generateBatch } from "../src/fixtures/generateBatch.js";
-import { invoker } from "../src/lambdas/invoker.js";
+import { invoker, InvokerValidationError } from "../src/lambdas/invoker.js";
 import { processor } from "../src/lambdas/processor.js";
 import type { Entity } from "../src/types.js";
 
+// The invoker rejecting an invalid/non-pet event is the correct, intended
+// behavior — that counts as a success, not a failure. Only an error past
+// that point (processor/evaluator) means the pipeline actually broke.
+function recordOutcome(error: unknown, counts: { succeeded: number; failed: number }): void {
+  if (error instanceof InvokerValidationError) {
+    counts.succeeded++;
+    console.log(`✅ Correctly rejected: ${error.message}`);
+  } else {
+    counts.failed++;
+    console.log(`❌ Unexpected failure: ${(error as Error).message}`);
+  }
+}
+
 async function runBatchWithQueue(label: string, entities: Entity[]): Promise<void> {
-  let enqueueFailed = 0;
+  const counts = { succeeded: 0, failed: 0 };
 
   for (const entity of entities) {
     try {
       await invoker(entity);
     } catch (error) {
-      enqueueFailed++;
-      console.log(`Failed: ${(error as Error).message}`);
+      recordOutcome(error, counts);
     }
   }
 
-  const { succeeded, failed } = await processor();
+  const result = await processor();
+  counts.succeeded += result.succeeded;
+  counts.failed += result.failed;
 
   console.log(
-    `\n${label} summary: ${succeeded} succeeded, ${failed + enqueueFailed} failed\n`,
+    `\n${label} summary: ${counts.succeeded} succeeded, ${counts.failed} failed\n`,
   );
 }
 
 async function runBatchDirect(label: string, entities: Entity[]): Promise<void> {
-  let succeeded = 0;
-  let failed = 0;
+  const counts = { succeeded: 0, failed: 0 };
 
   for (const entity of entities) {
     try {
       await invoker(entity, { useQueue: false });
-      succeeded++;
+      counts.succeeded++;
     } catch (error) {
-      failed++;
-      console.log(`Failed: ${(error as Error).message}`);
+      recordOutcome(error, counts);
     }
   }
 
-  console.log(`\n${label} summary: ${succeeded} succeeded, ${failed} failed\n`);
+  console.log(
+    `\n${label} summary: ${counts.succeeded} succeeded, ${counts.failed} failed\n`,
+  );
 }
 
 async function runBatch(
