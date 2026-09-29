@@ -4,9 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "tsx scripts/run-lambda.ts",
-    "test:small": "tsx scripts/run-lambda.ts small",
-    "test:large": "tsx scripts/run-lambda.ts large",
+    "test:queue": "tsx scripts/run-lambda.ts",
+    "test": "tsx scripts/run-lambda.ts --no-queue",
+    "test:small:queue": "tsx scripts/run-lambda.ts small",
+    "test:large:queue": "tsx scripts/run-lambda.ts large",
+    "test:small": "tsx scripts/run-lambda.ts small -- --no-queue",
+    "test:large": "tsx scripts/run-lambda.ts large -- --no-queue",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
